@@ -1,0 +1,26 @@
+version: '3'
+services:
+  ktnotes-mysql:
+    image: mysql:8.0
+    environment:
+      - MYSQL_ROOT_PASSWORD=admin123
+      - MYSQL_DATABASE=ktnotes
+      - MYSQL_USER=ktnotes
+      - MYSQL_PASSWORD=admin123
+    ports:
+      - 3306:3306
+    expose:
+      - 3306
+  ktnotes-api:
+    build: ./
+    restart: on-failure
+    ports:
+      - 9091:9091
+    environment:
+      - DATABASE_HOST=127.0.0.1
+      - DATABASE_USER=root
+      - DATABASE_PASSWORD=admin123
+      - DATABASE_NAME=ktnotes
+      - DATABASE_PORT=3306
+    depends_on:
+      - ktnotes-mysql

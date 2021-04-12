@@ -1,0 +1,46 @@
+jwt:
+  header: Authorization
+  secret:
+logging:
+  level:
+    org.springframework.security: DEBUG
+server:
+  port: 9091
+
+#spring:
+#  resources:
+#    chain:
+#      enabled: true
+#  profiles:
+#    active: local
+#  application:
+#    name: tknotes-api
+#  datasource:
+#    url: jdbc:mysql://${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_NAME}?allowPublicKeyRetrieval=true&useSSL=false&useTimezone=true&serverTimezone=UTC
+#    username: ${DATABASE_USER}
+#    password: ${DATABASE_PASSWORD}
+#    driver-class-name: com.mysql.cj.jdbc.Driver
+#  jpa:
+#    properties.hibernate.dialect: org.hibernate.dialect.MySQL8Dialect
+#    hibernate.ddl-auto: update
+#---
+spring:
+  resources:
+    chain:
+      enabled: true
+  profiles:
+    active: dev
+  application:
+    name: tknotes-api
+  datasource:
+    url: jdbc:mysql://ktnotes-mysql:3306/ktnotes?allowPublicKeyRetrieval=true&useSSL=false&useTimezone=true&serverTimezone=UTC
+    username: root
+    password: admin123
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    properties.hibernate.dialect: org.hibernate.dialect.MySQL8Dialect
+    hibernate.ddl-auto: update
+
+management:
+  security:
+    enabled: true # set to false to disable 'default' Spring Boot security
