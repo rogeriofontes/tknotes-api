@@ -8,6 +8,8 @@ import br.com.psi.tknotes.tknotesapi.repository.UserRepository
 import br.com.psi.tknotes.tknotesapi.security.JWTUtil
 import br.com.psi.tknotes.tknotesapi.service.UserService
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.cache.annotation.CacheEvict
+import org.springframework.cache.annotation.Cacheable
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.context.SecurityContextHolder
@@ -24,11 +26,12 @@ class UserServiceImpl(private val userRepository: UserRepository) : UserService 
     @Autowired
     private lateinit var userDetailsService: UserDetailsServiceImpl
 
+    @Cacheable("usersInCache")
     override fun getAll(): ResponseEntity<List<UserDTO>> = ResponseEntity.ok(userRepository.findAll().map { user->
         user.toDTO()
     })
 
-
+    @CacheEvict(value = ["usersInCache"], allEntries = true)
     override fun add(userDTO: UserDTO): ResponseEntity<UserDTO> {
         var user = userDTO.toUser()
         user.password = bCryptPasswordEncoder.encode(user.password)
@@ -42,21 +45,25 @@ class UserServiceImpl(private val userRepository: UserRepository) : UserService 
         }
     }
 
+    @Cacheable("usersInCache")
     override fun getById(userId: Long): ResponseEntity<UserDTO> = userRepository.findById(userId).map { user ->
         ResponseEntity.ok(user.toDTO())
     }.orElse(ResponseEntity.notFound().build())
 
+    @CacheEvict(value = ["usersInCache"], allEntries = true)
     override fun put(userId: Long, newUser: User): ResponseEntity<User> = userRepository.findById(userId).map { existingUser ->
         val updatedUser: User = existingUser
                 .copy(fullName = newUser.fullName, email = newUser.email)
         ResponseEntity.ok().body(userRepository.save(updatedUser))
     }.orElse(ResponseEntity.notFound().build())
 
+    @CacheEvict(value = ["usersInCache"], allEntries = true)
     override fun delete(userId: Long): ResponseEntity<Void> = userRepository.findById(userId).map { user ->
         userRepository.deleteById(user.id)
         ResponseEntity<Void>(HttpStatus.OK)
     }.orElse(ResponseEntity.notFound().build())
 
+    @Cacheable("usersInCache")
     override fun validated(user: User): TokenResponse? {
         val userResult = userDetailsService.loadUserByUsername(user.email)
         return findByEmail(userResult.username).let { foundedUser ->
@@ -64,12 +71,15 @@ class UserServiceImpl(private val userRepository: UserRepository) : UserService 
         }
     }
 
+    @Cacheable("usersInCache")
     override fun myself(): String? {
         return userRepository.findByEmail(getCurrentUserEmail())?.fullName
     }
 
+    @Cacheable("usersInCache")
     fun findByEmail(email: String): User? = userRepository.findByEmail(email)
 
+    @Cacheable("usersInCache")
     private fun getCurrentUserEmail(): String? {
         val user = SecurityContextHolder.getContext().authentication.principal as UserDetailsImpl
         return user.username

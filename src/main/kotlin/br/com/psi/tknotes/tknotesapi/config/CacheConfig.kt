@@ -15,7 +15,7 @@ class CacheConfig {
 
     @Bean
     fun cacheManager(): CacheManager {
-        return CaffeineCacheManager("notesInCache")
+        return CaffeineCacheManager("notesInCache", "usersInCache")
                 .apply {
                     isAllowNullValues = false
                     setCaffeine(
