@@ -4,42 +4,40 @@ import br.com.psi.tknotes.tknotesapi.model.Note
 import br.com.psi.tknotes.tknotesapi.repository.NoteRepository
 import br.com.psi.tknotes.tknotesapi.service.NoteService
 import org.apache.logging.log4j.LogManager
-import org.springframework.http.HttpStatus
-import org.springframework.http.ResponseEntity
+import org.springframework.cache.annotation.CacheConfig
+import org.springframework.cache.annotation.CacheEvict
+import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder
+import java.util.*
 
 @Service
+//@CacheConfig(cacheNames = ["notesInCache"])
 class NoteServiceImpl(private val noteRepository: NoteRepository) : NoteService {
 
     private val logger = LogManager.getLogger(NoteServiceImpl::class)
 
-    override fun getAll(): ResponseEntity<List<Note>> = ResponseEntity.ok(noteRepository.findAll().toList())
+    @Cacheable("notesInCache")
+    override fun getAll(): List<Note> = noteRepository.findAll().toList()
 
-    override fun add(note: Note): ResponseEntity<Note> {
+    @Cacheable("notesInCache")
+    override fun add(note: Note): Note {
         logger.warn("Note to add: $note")
-        return noteRepository.save(note).let {
-            ResponseEntity.created(
-                    ServletUriComponentsBuilder
-                            .fromCurrentRequest()
-                            .path("/{id}")
-                            .buildAndExpand(it.id)
-                            .toUri()).body(it)
-        }
+        return noteRepository.save(note)
     }
 
-    override fun getById(noteId: Long): ResponseEntity<Note> = noteRepository.findById(noteId).map { note ->
-        ResponseEntity.ok(note)
-    }.orElse(ResponseEntity.notFound().build())
+    @Cacheable("notesInCache")
+    override fun getById(id: Long): Optional<Note> = noteRepository.findById(id)
 
-    override fun put(noteId: Long, newNote: Note): ResponseEntity<Note> = noteRepository.findById(noteId).map { existingNote ->
+    @Cacheable("notesInCache")
+    override fun getByTitle(title: String): Optional<Note> = noteRepository.findByTitle(title)
+
+    @CacheEvict(value = ["notesInCache"], allEntries = true)
+    override fun put(noteId: Long, newNote: Note): Optional<Note> = noteRepository.findById(noteId).map { existingNote ->
         val updatedNote: Note = existingNote
                 .copy(title = newNote.title, description = newNote.description)
-        ResponseEntity.ok().body(noteRepository.save(updatedNote))
-    }.orElse(ResponseEntity.notFound().build())
+        return@map noteRepository.save(updatedNote)
+    }
 
-    override fun delete(noteId: Long): ResponseEntity<Void> = noteRepository.findById(noteId).map { note ->
-        noteRepository.deleteById(note.id)
-        ResponseEntity<Void>(HttpStatus.OK)
-    }.orElse(ResponseEntity.notFound().build())
+    @CacheEvict(value = ["notesInCache"], allEntries = true)
+    override fun delete(noteId: Long) = noteRepository.deleteById(noteId)
 }

@@ -25,10 +25,24 @@ class SecurityConfig: WebSecurityConfigurerAdapter() {
     @Autowired
     private lateinit var tokenAuthenticationService: TokenAuthenticationService
 
+    val authWithList = arrayOf<String>(
+            "/v2/api-docs",
+            "/swagger-resources",
+            "/swagger-resources/**",
+            "/configuration/ui",
+            "/configuration/security",
+            "/swagger-ui.html",
+            "/webjars/**",
+            "/actuator/**"
+    )
+    val angularRoutings =
+            arrayOf<String>("/language", "/home")
+
     override fun configure(http: HttpSecurity) {
         http.csrf().disable()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and().authorizeRequests()
+                .antMatchers(*authWithList).permitAll() //https://www.javaer101.com/pt/article/419289.html, https://proandroiddev.com/kotlins-vararg-and-spread-operator-4200c07d65e1
                 .antMatchers(HttpMethod.GET, "/actuator/health").permitAll()
                 .antMatchers(HttpMethod.POST, "/signup").permitAll()
                 .antMatchers(HttpMethod.POST, "/login").permitAll()
